@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: { params: { username: strin
       return NextResponse.json({ error: "User session not found" }, { status: 404 });
     }
 
-    const alreadyFollowing = targetUser.followers.includes(currentUserId as any);
+    const alreadyFollowing = targetUser.followers.some((id: any) => id.toString() === currentUserId);
 
     if (alreadyFollowing) {
       // Unfollow - pull IDs

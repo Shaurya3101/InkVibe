@@ -10,7 +10,7 @@ export async function GET(req: Request, { params }: { params: { username: string
     await dbConnect();
 
     const user = await User.findOne({ username })
-      .select("name username email avatar bio social_links followers following");
+      .select("name username avatar bio social_links followers following");
 
     if (!user) {
       return NextResponse.json({ error: "Writer not found" }, { status: 404 });

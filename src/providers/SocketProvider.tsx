@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -25,11 +25,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const incrementCount = useNotificationStore((state) => state.incrementCount);
 
+  const socketRef = useRef<Socket | null>(null);
+
   useEffect(() => {
     const userId = session?.user?.id;
     if (!userId) {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
         setSocket(null);
         setOnline(false);
       }
@@ -41,19 +44,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       transports: ["websocket", "polling"],
     });
 
-    newSocket.on("connect", () => {
+    const handleConnect = () => {
       setOnline(true);
       newSocket.emit("join", userId);
-    });
-
-    newSocket.on("disconnect", () => {
-      setOnline(false);
-    });
-
-    newSocket.on("notification", (data: any) => {
+    };
+    const handleDisconnect = () => setOnline(false);
+    const handleNotification = (data: any) => {
       addNotification(data.notification);
       incrementCount();
-      
+
       let toastMessage = "";
       if (data.type === "like") {
         toastMessage = `${data.notification.user.name} liked your article`;
@@ -77,14 +76,23 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
           border: "1px solid #c5a880",
         },
       });
-    });
+    };
 
+    newSocket.on("connect", handleConnect);
+    newSocket.on("disconnect", handleDisconnect);
+    newSocket.on("notification", handleNotification);
+
+    socketRef.current = newSocket;
     setSocket(newSocket);
 
     return () => {
+      newSocket.off("connect", handleConnect);
+      newSocket.off("disconnect", handleDisconnect);
+      newSocket.off("notification", handleNotification);
       newSocket.disconnect();
+      socketRef.current = null;
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, addNotification, incrementCount]);
 
   return (
     <SocketContext.Provider value={{ socket, online }}>

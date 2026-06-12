@@ -21,11 +21,18 @@ import {
   X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Navbar() {
   const { data: session } = useSession() as any;
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+
+  // Avatar src state to allow next/image fallback handling
+  const [avatarSrc, setAvatarSrc] = useState<string>(session?.user?.image || "/default-avatar.png");
+  useEffect(() => {
+    setAvatarSrc(session?.user?.image || "/default-avatar.png");
+  }, [session?.user?.image]);
   
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
@@ -52,16 +59,34 @@ export default function Navbar() {
     }
   }, [session, setUnreadCount]);
 
-  // Handle outside clicks to close profile dropdown
+  // Handle outside clicks and Escape key to close profile dropdown; focus management
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setDropdownOpen(false);
+        setMobileMenuOpen(false);
+      }
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
+
+  // When dropdown opens, move focus to first actionable item for accessibility
+  useEffect(() => {
+    if (dropdownOpen && dropdownRef.current) {
+      const first = dropdownRef.current.querySelector('a,button');
+      (first as HTMLElement | null)?.focus();
+    }
+  }, [dropdownOpen]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,8 +167,8 @@ export default function Navbar() {
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0.5 right-0.5 bg-accent text-[10px] text-white font-bold h-4 w-4 rounded-full flex items-center justify-center border border-canvas-light dark:border-canvas-dark">
-                    {unreadCount}
+                  <span className="absolute top-0.5 right-0.5 bg-accent text-[10px] text-white font-bold h-4 w-4 rounded-full flex items-center justify-center border border-canvas-light dark:border-canvas-dark" aria-label={`${unreadCount} unread notifications`}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Link>
@@ -153,21 +178,30 @@ export default function Navbar() {
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center space-x-2 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-0"
+                  aria-haspopup="true"
+                  aria-expanded={dropdownOpen}
+                  aria-controls="profile-dropdown"
                 >
-                  <img
-                    src={session.user.image || "/default-avatar.png"}
-                    alt={session.user.name || "User"}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(session.user.name || "User")}`;
-                    }}
+                  {/* Profile avatar uses next/image for optimization; fallback to initials SVG if remote image fails */}
+                  <Image
+                    src={avatarSrc}
+                    alt={session?.user?.name || "User"}
+                    width={32}
+                    height={32}
+                    unoptimized
+                    onError={() => setAvatarSrc(`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(session?.user?.name || "User")}`)}
                     className="w-8 h-8 rounded-full border border-accent/30 object-cover"
                   />
+
                   <ChevronDown className="w-4 h-4 text-stone-500" />
                 </button>
 
                 <AnimatePresence>
                   {dropdownOpen && (
                     <motion.div
+                      id="profile-dropdown"
+                      role="menu"
+                      aria-label="Profile menu"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}

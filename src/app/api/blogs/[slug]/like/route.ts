@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: { params: { slug: string } 
       return NextResponse.json({ error: "Article not found" }, { status: 404 });
     }
 
-    const alreadyLiked = blog.likes.includes(userId as any);
+    const alreadyLiked = blog.likes.some((id: any) => id.toString() === userId);
 
     if (alreadyLiked) {
       // Pull user from likes array & decrement counter

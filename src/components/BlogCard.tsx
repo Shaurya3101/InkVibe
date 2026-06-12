@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, MessageSquare, Eye, Calendar } from "lucide-react";
 
 interface BlogCardProps {
@@ -29,16 +30,18 @@ export default function BlogCard({ blog }: BlogCardProps) {
   );
 
   return (
-    <article className="group flex flex-col space-y-3 p-4 rounded-2xl border border-borderCol-light/80 dark:border-borderCol-dark/80 bg-canvas-cardLight dark:bg-canvas-cardDark/30 hover:border-accent/30 dark:hover:border-accent/30 transition-all duration-300">
+    <article role="article" aria-labelledby={`title-${blog.slug}`} className="group flex flex-col space-y-3 p-4 rounded-2xl border border-borderCol-light/80 dark:border-borderCol-dark/80 bg-canvas-cardLight dark:bg-canvas-cardDark/30 hover:border-accent/30 dark:hover:border-accent/30 transition-all duration-300">
       
       {/* Cover Image */}
       {blog.banner && (
         <Link href={`/blog/${blog.slug}`} className="w-full aspect-[16/9] rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-900 border border-borderCol-light/30 dark:border-borderCol-dark/30">
-          <img
+          <Image
             src={blog.banner}
             alt={blog.title}
+            width={800}
+            height={450}
+            unoptimized
             className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            loading="lazy"
           />
         </Link>
       )}
@@ -63,7 +66,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
 
         {/* Title */}
         <Link href={`/blog/${blog.slug}`}>
-          <h3 className="font-serif text-xl font-bold tracking-tight text-ink-light dark:text-ink-dark group-hover:text-accent transition-colors line-clamp-2">
+          <h3 id={`title-${blog.slug}`} className="font-serif text-xl font-bold tracking-tight text-ink-light dark:text-ink-dark group-hover:text-accent transition-colors line-clamp-2">
             {blog.title}
           </h3>
         </Link>
@@ -81,12 +84,12 @@ export default function BlogCard({ blog }: BlogCardProps) {
         
         {/* Author Avatar & Username */}
         <Link href={`/profile/${blog.author.username}`} className="flex items-center space-x-2">
-          <img
-            src={blog.author.avatar || "/default-avatar.png"}
+          <Image
+            src={blog.author.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(blog.author.name)}`}
             alt={blog.author.name}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(blog.author.name)}`;
-            }}
+            width={24}
+            height={24}
+            unoptimized
             className="w-6 h-6 rounded-full border border-accent/20 object-cover"
           />
           <div className="flex flex-col text-[11px] leading-tight">

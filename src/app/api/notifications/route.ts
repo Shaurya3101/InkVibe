@@ -3,6 +3,9 @@ import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Notification from "@/lib/models/Notification";
 
+// Force dynamic rendering to avoid static collection-time header usage warnings
+export const dynamic = "force-dynamic";
+
 // GET: Fetch notifications or count unread ones
 export async function GET(req: Request) {
   try {

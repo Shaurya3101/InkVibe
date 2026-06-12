@@ -80,7 +80,16 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    const slug = generateSlug(title);
+    let slug = generateSlug(title);
+
+    // Ensure unique slug: append a counter if needed
+    let slugExists = await Blog.findOne({ slug });
+    let slugCounter = 1;
+    while (slugExists) {
+      slug = `${slug}-${slugCounter}`;
+      slugCounter++;
+      slugExists = await Blog.findOne({ slug });
+    }
 
     // Create the blog post
     const newBlog = await Blog.create({

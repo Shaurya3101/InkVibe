@@ -236,7 +236,7 @@ export default function Editor({ initialData, onSave, isSubmitting }: EditorProp
       
       {/* Save state status */}
       <div className="flex items-center justify-between text-xs text-mutedText-light dark:text-mutedText-dark font-medium border-b border-borderCol-light/50 dark:border-borderCol-dark/50 pb-2">
-        <span>Auto-save: {autoSaveStatus}</span>
+        <span aria-live="polite">Auto-save: {autoSaveStatus}</span>
         <span className="flex items-center"><Save className="w-3.5 h-3.5 mr-1" /> Ready</span>
       </div>
 
@@ -277,6 +277,7 @@ export default function Editor({ initialData, onSave, isSubmitting }: EditorProp
 
       {/* Post Title Field */}
       <textarea
+        aria-label="Post title"
         placeholder="Enter your title here..."
         value={title}
         onChange={(e) => setTitle(e.target.value)}
@@ -424,14 +425,14 @@ export default function Editor({ initialData, onSave, isSubmitting }: EditorProp
       <div className="flex items-center justify-end space-x-3 pt-6 border-t border-borderCol-light/50 dark:border-borderCol-dark/50">
         <button
           onClick={() => handleSubmit(true)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploadingBanner}
           className="border border-borderCol-light dark:border-borderCol-dark text-stone-700 dark:text-stone-300 px-6 py-2.5 rounded-full text-sm font-medium transition-all hover:bg-stone-50 dark:hover:bg-stone-950 disabled:opacity-50"
         >
           Save as Draft
         </button>
         <button
           onClick={() => handleSubmit(false)}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploadingBanner}
           className="bg-accent hover:bg-accent-hover text-stone-950 px-6 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-all shadow-sm hover:shadow-md disabled:opacity-50 flex items-center"
         >
           <BookOpen className="w-4 h-4 mr-2" />

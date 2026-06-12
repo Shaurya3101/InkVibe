@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: "Successfully registered account",
       user: {
-        id: newUser._id,
+        id: newUser._id.toString(),
         name: newUser.name,
         email: newUser.email,
         username: newUser.username,

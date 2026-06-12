@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
@@ -38,18 +39,18 @@ export default function CommentsSection({ blogSlug, blogAuthorId, onCommentCount
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load comments list
-  const loadComments = async () => {
+  // Load comments list (stable reference)
+  const loadComments = useCallback(async () => {
     try {
       const res = await fetch(`/api/blogs/${blogSlug}/comments`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setComments(data.comments || []);
-      
-      // Calculate total count
-      let count = data.comments.length;
-      data.comments.forEach((c: CommentData) => {
-        count += c.children?.length || 0;
+
+      // Calculate total count (including nested replies)
+      let count = 0;
+      (data.comments || []).forEach((c: CommentData) => {
+        count += 1 + (c.children?.length || 0);
       });
       if (onCommentCountChange) onCommentCountChange(count);
     } catch (err) {
@@ -57,11 +58,11 @@ export default function CommentsSection({ blogSlug, blogAuthorId, onCommentCount
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [blogSlug, onCommentCountChange]);
 
   useEffect(() => {
     loadComments();
-  }, [blogSlug]);
+  }, [loadComments]);
 
   // Submit top-level comment
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -208,11 +209,14 @@ export default function CommentsSection({ blogSlug, blogAuthorId, onCommentCount
                 
                 {/* Top Level Comment Card */}
                 <div className="flex items-start space-x-3 group">
-                  <img
-                    src={comment.commented_by.avatar || "/default-avatar.png"}
-                    alt={comment.commented_by.name}
-                    className="w-8 h-8 rounded-full border border-accent/20 object-cover mt-0.5"
-                  />
+                  <Image
+                      src={comment.commented_by.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(comment.commented_by.name)}`}
+                      alt={comment.commented_by.name}
+                      width={32}
+                      height={32}
+                      unoptimized
+                      className="w-8 h-8 rounded-full border border-accent/20 object-cover mt-0.5"
+                    />
                   <div className="flex-grow min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5 text-xs">
@@ -295,11 +299,14 @@ export default function CommentsSection({ blogSlug, blogAuthorId, onCommentCount
                       
                       return (
                         <div key={reply._id} className="flex items-start space-x-3 group">
-                          <img
-                            src={reply.commented_by.avatar || "/default-avatar.png"}
-                            alt={reply.commented_by.name}
-                            className="w-7 h-7 rounded-full border border-accent/20 object-cover mt-0.5"
-                          />
+                          <Image
+                                src={reply.commented_by.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(reply.commented_by.name)}`}
+                                alt={reply.commented_by.name}
+                                width={28}
+                                height={28}
+                                unoptimized
+                                className="w-7 h-7 rounded-full border border-accent/20 object-cover mt-0.5"
+                              />
                           <div className="flex-grow min-w-0">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1.5 text-xs">

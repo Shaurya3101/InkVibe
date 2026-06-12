@@ -8,15 +8,19 @@ export async function triggerNotificationBroadcast(
   notification: any
 ) {
   const socketServerUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "http://localhost:3001";
-  const apiKey = process.env.SOCKET_SERVER_API_KEY || "inkvibe_realtime_secure_key_8f7b2cde7d3e5a1b";
+  const apiKey = process.env.SOCKET_SERVER_API_KEY;
+
+  if (!apiKey) {
+    console.warn("No SOCKET_SERVER_API_KEY configured; real-time broadcasts will be skipped for security.");
+  }
 
   try {
+    const headers: any = { "Content-Type": "application/json" };
+    if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
     const res = await fetch(`${socketServerUrl}/api/broadcast`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
         userId,
         type,
